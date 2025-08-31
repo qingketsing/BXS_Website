@@ -1,0 +1,119 @@
+---
+export interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { 
+  title = "::BXS::", 
+  description = "BXS Website" 
+} = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="en" class="transition-colors duration-300">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+    
+    <!-- Theme detection script -->
+    <script>
+      // Theme detection and initialization
+      if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+      }
+    </script>
+  </head>
+  <body class="bg-white dark:bg-gray-900 transition-colors duration-300">
+    <slot />
+    
+    <!-- Global Theme Toggle Script -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const mobileMenuButton = document.getElementById('mobileMenuButton');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const closeMobileMenu = document.getElementById('closeMobileMenu');
+        const themeToggle = document.getElementById('themeToggle');
+        const mobileThemeToggle = document.getElementById('mobileThemeToggle');
+        const sunIcon = document.getElementById('sunIcon');
+        const moonIcon = document.getElementById('moonIcon');
+        const mobileSunIcon = document.getElementById('mobileSunIcon');
+        const mobileMoonIcon = document.getElementById('mobileMoonIcon');
+        
+        // Mobile menu functionality
+        function openMobileMenu() {
+          if (mobileMenu) {
+            mobileMenu.classList.remove('translate-x-full');
+            document.body.style.overflow = 'hidden';
+          }
+        }
+        
+        function closeMobileMenuFunc() {
+          if (mobileMenu) {
+            mobileMenu.classList.add('translate-x-full');
+            document.body.style.overflow = '';
+          }
+        }
+        
+        if (mobileMenuButton) {
+          mobileMenuButton.addEventListener('click', openMobileMenu);
+        }
+        
+        if (closeMobileMenu) {
+          closeMobileMenu.addEventListener('click', closeMobileMenuFunc);
+        }
+        
+        // Theme toggle functionality
+        function updateThemeIcons() {
+          if (sunIcon && moonIcon) {
+            if (document.documentElement.classList.contains('dark')) {
+              sunIcon.classList.remove('hidden');
+              moonIcon.classList.add('hidden');
+            } else {
+              sunIcon.classList.add('hidden');
+              moonIcon.classList.remove('hidden');
+            }
+          }
+          
+          if (mobileSunIcon && mobileMoonIcon) {
+            if (document.documentElement.classList.contains('dark')) {
+              mobileSunIcon.classList.remove('hidden');
+              mobileMoonIcon.classList.add('hidden');
+            } else {
+              mobileSunIcon.classList.add('hidden');
+              mobileMoonIcon.classList.remove('hidden');
+            }
+          }
+        }
+        
+        function toggleTheme() {
+          if (document.documentElement.classList.contains('dark')) {
+            document.documentElement.classList.remove('dark');
+            localStorage.theme = 'light';
+          } else {
+            document.documentElement.classList.add('dark');
+            localStorage.theme = 'dark';
+          }
+          updateThemeIcons();
+        }
+        
+        // Initialize theme icons
+        updateThemeIcons();
+        
+        if (themeToggle) {
+          themeToggle.addEventListener('click', toggleTheme);
+        }
+        
+        if (mobileThemeToggle) {
+          mobileThemeToggle.addEventListener('click', toggleTheme);
+        }
+      });
+    </script>
+  </body>
+</html>

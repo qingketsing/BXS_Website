@@ -1,0 +1,71 @@
+---
+import MainLayout from "../layout/MainLayout.astro";
+import { readFileSync } from 'fs';
+import { load } from 'js-yaml';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+// 读取团队成员数据
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const yamlPath = join(__dirname, '../data/team_members.yml');
+const yamlContent = readFileSync(yamlPath, 'utf8');
+const teamMembers = load(yamlContent) as Array<{
+  name: string;
+  tags: string[];
+  description: string;
+  avatar: string;
+}>;
+---
+
+<MainLayout title="Team Members - BXS" description="BXS Team Members" currentPath="/team_memeber">
+  <!-- MAIN PART -->
+  <div class="max-w-6xl mx-auto px-6 py-12">
+    <!-- Page Title -->
+    <div class="mb-8">
+      <h1 class="text-5xl font-bold text-black dark:text-blue-300 mb-6">Members</h1>
+    </div>
+    <div class="w-full h-0.25 bg-gray-300 dark:bg-white mt-10"></div>
+    
+    <!-- 团队成员列表 -->
+    <div class="space-y-5 mt-12">
+      {teamMembers.map((member) => (
+        <div class="flex items-start">
+          <!-- 头像 -->
+          <div class="flex-shrink-0 w-20 h-20 mr-6">
+            <img 
+              src={member.avatar} 
+              alt={`${member.name}的头像`}
+              class="w-20 h-20 rounded-full object-cover bg-blue-500"
+              onerror="this.style.backgroundColor='#3b82f6'; this.style.display='flex'; this.style.alignItems='center'; this.style.justifyContent='center'; this.innerHTML='BXS';"
+            />
+          </div>
+          
+          <!-- 成员信息 -->
+          <div class="flex-1 space-y-3">
+            <!-- 姓名和标签在同一行 -->
+            <div class="flex items-center justify-between flex-wrap gap-3">
+              <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">
+                {member.name}
+              </h2>
+              <!-- 标签 -->
+              <div class="flex flex-wrap gap-2">
+                {member.tags.map((tag) => (
+                  <span class="px-3 py-1 text-sm font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+            
+            <!-- 介绍 -->
+            <p class="text-gray-600 dark:text-gray-400 leading-relaxed">
+              {member.description}
+            </p>
+          </div>
+        </div>
+        <div class="w-full h-0.25 bg-gray-300 dark:bg-white mt-4"></div>
+      ))}
+    </div>
+  </div>
+</MainLayout>

@@ -1,0 +1,45 @@
+---
+export async function getStaticPaths() {
+  // 获取所有博客文件
+  const blogModules = import.meta.glob('../../blogs/*.md', { eager: true });
+  
+  return Object.entries(blogModules).map(([path, mod]) => {
+    const slug = path.split('/').pop()?.replace('.md', '') || '';
+    const module = mod as any;
+    
+    return {
+      params: { slug },
+      props: {
+        title: module.frontmatter?.title || slug,
+        description: module.frontmatter?.description || '',
+        date: module.frontmatter?.date || new Date().toISOString().split('T')[0],
+        author: module.frontmatter?.author || 'Unknown',
+        tags: module.frontmatter?.tags || [],
+        content: module.default || (() => 'No content available'),
+        rawContent: module.rawContent || ''
+      }
+    };
+  });
+}
+
+const { title, description, date, author, tags, content: Content, rawContent } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{title}</title>
+    <meta name="description" content={description}>
+</head>
+<body>
+    <article>
+        <h1>{title}</h1>
+        
+        <div class="content">
+            <Content />
+        </div>
+    </article>
+</body>
+</html>
