@@ -36,6 +36,7 @@ const allPosts = processedPosts;
     <div class="w-full mb-12">
       <div class="relative max-w-full">
         <input 
+          id="searchInput"
           type="text" 
           placeholder="Search articles" 
           class="w-full px-4 py-3 pr-12 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-50 border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-colors placeholder-gray-500 dark:placeholder-gray-400"
@@ -47,14 +48,23 @@ const allPosts = processedPosts;
           </svg>
         </div>
       </div>
+      <!-- Search Results Count -->
+      <div id="searchResults" class="mt-4 text-sm text-gray-600 dark:text-gray-400 hidden">
+        找到 <span id="resultCount">0</span> 篇文章
+      </div>
       <!-- Black Line -->
       <div class="w-full h-0.25 bg-gray-300 dark:bg-white mt-10"></div>
     </div>
 
     <!--文章列表 -->
-    <div class="space-y-8">
+    <div id="articlesList" class="space-y-8">
       {allPosts.map((post) => (
-        <article class="border-b border-gray-200 dark:border-gray-700 pb-8 last:border-b-0">
+        <article class="blog-post border-b border-gray-200 dark:border-gray-700 pb-8 last:border-b-0" data-search-content={JSON.stringify({
+          title: post.title.toLowerCase(),
+          description: post.description.toLowerCase(),
+          author: post.author.toLowerCase(),
+          tags: post.tags.map((tag: string) => tag.toLowerCase()).join(' ')
+        })}>
           <div class="flex flex-col space-y-3">
             <!-- 文章标题 -->
             <h2 class="text-2xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
@@ -119,6 +129,112 @@ const allPosts = processedPosts;
           <p class="text-gray-600 dark:text-gray-400 text-lg">暂无文章</p>
         </div>
       )}
+      
+      <!-- 搜索无结果提示 -->
+      <div id="noResults" class="text-center py-12 hidden">
+        <p class="text-gray-600 dark:text-gray-400 text-lg">没有找到匹配的文章</p>
+      </div>
     </div>
   </div>
 </MainLayout>
+
+<script>
+  // 搜索功能实现
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+    const articlesList = document.getElementById('articlesList');
+    const searchResults = document.getElementById('searchResults');
+    const resultCount = document.getElementById('resultCount');
+    const noResults = document.getElementById('noResults');
+    const blogPosts = document.querySelectorAll('.blog-post');
+
+    if (!searchInput || !articlesList || !searchResults || !resultCount || !noResults) {
+      return;
+    }
+
+    // 防抖函数
+    function debounce(func: Function, wait: number) {
+      let timeout: NodeJS.Timeout;
+      return function executedFunction(...args: any[]) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+
+    // 搜索函数
+    function performSearch(query: string) {
+      const searchTerm = query.toLowerCase().trim();
+      
+      if (searchTerm === '') {
+        // 如果搜索为空，显示所有文章
+        blogPosts.forEach(post => {
+          (post as HTMLElement).style.display = 'block';
+        });
+        if (searchResults) searchResults.classList.add('hidden');
+        if (noResults) noResults.classList.add('hidden');
+        return;
+      }
+
+      let visibleCount = 0;
+
+      blogPosts.forEach(post => {
+        const searchContent = (post as HTMLElement).getAttribute('data-search-content');
+        
+        if (searchContent) {
+          try {
+            const content = JSON.parse(searchContent);
+            const isMatch = 
+              content.title.includes(searchTerm) ||
+              content.description.includes(searchTerm) ||
+              content.author.includes(searchTerm) ||
+              content.tags.includes(searchTerm);
+
+            if (isMatch) {
+              (post as HTMLElement).style.display = 'block';
+              visibleCount++;
+            } else {
+              (post as HTMLElement).style.display = 'none';
+            }
+          } catch (e) {
+            // 如果JSON解析失败，隐藏该文章
+            (post as HTMLElement).style.display = 'none';
+          }
+        } else {
+          (post as HTMLElement).style.display = 'none';
+        }
+      });
+
+      // 更新结果统计
+      if (resultCount) resultCount.textContent = visibleCount.toString();
+      if (searchResults) searchResults.classList.remove('hidden');
+
+      // 显示/隐藏无结果提示
+      if (visibleCount === 0) {
+        if (noResults) noResults.classList.remove('hidden');
+      } else {
+        if (noResults) noResults.classList.add('hidden');
+      }
+    }
+
+    // 添加防抖的搜索事件监听器
+    const debouncedSearch = debounce(performSearch, 300);
+    
+    searchInput.addEventListener('input', (e) => {
+      const target = e.target as HTMLInputElement;
+      debouncedSearch(target.value);
+    });
+
+    // 清除搜索按ESC键
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        searchInput.value = '';
+        performSearch('');
+        searchInput.blur();
+      }
+    });
+  });
+</script>
